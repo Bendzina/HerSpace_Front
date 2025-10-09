@@ -1,0 +1,400 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+export const href = null;
+
+type Language = 'en' | 'ka';
+
+// English translations
+const enTranslations = {
+  common: {
+    start: 'Start',
+  },
+  ai: {
+    welcome: "Hello! I'm Dagi, your AI assistant for mental well-being. How can I support you today? 🌟",
+    typing: "Dagi is typing...",
+    tarot: "Draw Tarot",
+  },
+  profile: {
+    title: 'Profile',
+    userName: 'Sophia Carter',
+    subtitle: 'Mindful Journey',
+    joined: 'Joined 2022',
+    settings: 'Settings',
+    dayStreak: 'Day Streak',
+    ritualsCompleted: 'Rituals Completed',
+    journalEntries: 'Journal Entries',
+    notifications: 'Notifications',
+    accountManagement: 'Account Management',
+    helpSupport: 'Help & Support',
+    permissionRequired: 'Permission to access gallery is required!',
+  },
+  rituals: {
+    filters: {
+      all: 'All',
+      gentle: 'Gentle',
+      empowering: 'Empowering',
+      grounding: 'Grounding',
+      uplifting: 'Uplifting',
+      healing: 'Healing',
+    },
+    phases: {
+      motherhood: 'Motherhood',
+      any: 'Any Phase',
+      all: 'All Phases'
+    },
+    minutes: 'min',
+    filterByTone: 'Filter by Tone',
+    lifePhase: 'Life Phase',
+    sacredRituals: 'Sacred Rituals',
+    nurtureYourSoul: 'Nurture your soul with daily rituals',
+    noRitualsFound: 'No rituals found',
+    searchYourPerfectRitual: 'Search your perfect ritual',
+    openHistory: 'Open ritual history',
+  },
+  notifications: {
+    title: 'Notifications',
+    reset: 'Reset',
+    cancel: 'Cancel',
+    resetTitle: 'Reset Settings',
+    resetMessage: 'Are you sure you want to reset all notification settings to default?',
+    mainNotifications: 'Main Notifications',
+    goalsAchievements: 'Goals & Achievements',
+    optionalNotifications: 'Optional Notifications',
+    dailyReminders: 'Daily Reminders',
+    dailyRemindersDesc: 'Get reminded to complete your daily rituals',
+    journalReminders: 'Journal Reminders',
+    journalRemindersDesc: 'Notifications to write in your journal',
+    meditationAlerts: 'Meditation Alerts',
+    meditationAlertsDesc: 'Reminders for meditation sessions',
+    weeklyGoals: 'Weekly Goals',
+    weeklyGoalsDesc: 'Updates on your weekly progress',
+    achievementAlerts: 'Achievement Alerts',
+    achievementAlertsDesc: 'Celebrate when you reach milestones',
+    motivationalQuotes: 'Motivational Quotes',
+    motivationalQuotesDesc: 'Daily inspirational messages',
+    systemUpdates: 'System Updates',
+    systemUpdatesDesc: 'Important app updates and features',
+    marketingEmails: 'Marketing Emails',
+    marketingEmailsDesc: 'Promotional content and offers',
+  },
+  help: {
+    title: 'Help & Support',
+    faqTitle: 'Frequently Asked Questions',
+    question1: 'How do I start my daily ritual?',
+    answer1: 'Go to the home screen and tap on "Start Ritual". Follow the guided steps to complete your daily practice.',
+    question2: 'Can I customize my meditation sessions?',
+    answer2: 'Yes! Go to Settings > Meditation Preferences to customize duration, background sounds, and guidance style.',
+    question3: 'How do I backup my journal entries?',
+    answer3: 'Your journal entries are automatically synced to your account. You can also export them from Settings > Data Management.',
+    contactTitle: 'Contact Us',
+    email: 'Email Support',
+    website: 'Help Website',
+    appInfoTitle: 'App Information',
+    version: 'Version',
+    buildNumber: 'Build Number',
+    tipsTitle: 'Pro Tips',
+    tip1: 'Set consistent daily reminders to build a strong habit',
+    tip2: 'Use the progress tracker to see your growth over time',
+    tip3: 'Enable dark mode in settings for better evening use',
+  },
+  password: {
+    title: 'Change Password',
+    currentPassword: 'Current Password',
+    newPassword: 'New Password',
+    confirmPassword: 'Confirm Password',
+    enterCurrentPassword: 'Enter your current password',
+    enterNewPassword: 'Enter your new password',
+    confirmNewPassword: 'Confirm your new password',
+    requirements: 'Password Requirements',
+    minLength: 'At least 8 characters',
+    hasUpperCase: 'One uppercase letter',
+    hasLowerCase: 'One lowercase letter',
+    hasNumbers: 'One number',
+    hasSpecialChar: 'One special character',
+    securityTips: 'Security Tips',
+    tip1: 'Use a unique password for this app',
+    tip2: 'Change your password regularly',
+    tip3: 'Never share your password with others',
+    changePassword: 'Change Password',
+    error: 'Error',
+    success: 'Success',
+    fillAllFields: 'Please fill in all fields',
+    passwordsDontMatch: 'Passwords do not match',
+    weakPassword: 'Password does not meet security requirements',
+    passwordChanged: 'Your password has been successfully changed',
+    ok: 'OK',
+  },
+  ritualDetails: {
+    helpful: 'Helpful',
+    notReally: 'Not really',
+    rate: 'Rate effectiveness',
+    notes: 'Notes (optional)',
+    notesPlaceholder: 'How do you feel now?',
+    start: 'Start',
+    starting: 'Starting…',
+    done: 'Done',
+    saving: 'Saving…',
+    saved: 'Saved. Thank you for sharing.',
+    failedStart: 'Failed to start ritual',
+    failedSave: 'Failed to save',
+    notFound: 'Ritual not found.',
+  },
+  ritualHistory: {
+    back: 'Back',
+    myRituals: 'My Rituals',
+    total: 'Total',
+    helpful: 'Helpful',
+    avgRating: 'Avg Rating',
+    notReally: 'Not really',
+    noHistory: 'No history yet.',
+  },
+  settings: {
+    title: 'Settings',
+    appearance: 'Appearance',
+    darkMode: 'Dark Mode',
+    darkModeDesc: 'Switch between light and dark themes',
+    language: 'Language',
+    currentLanguage: 'Language',
+    account: 'Account',
+    profile: 'Profile',
+    profileDesc: 'View and edit your profile',
+    notifications: 'Notifications',
+    notificationsDesc: 'Manage your notification preferences',
+    security: 'Security',
+    securityDesc: 'Change password and security settings',
+    support: 'Support',
+    helpSupport: 'Help & Support',
+    helpSupportDesc: 'Get help and contact support',
+  },
+  
+};
+
+// Georgian translations
+const kaTranslations = {
+  common: {
+    start: 'დაწყება',
+  },
+  ai: {
+    welcome: "გამარჯობა! მე ვარ Dagi, შენი AI ასისტენტი მენტალური კეთილდღეობისთვის. როგორ შემიძლია დაგეხმარო დღეს? ",
+    typing: "Dagi წერს...",
+    tarot: "ტაროს გაშლა",
+  },
+  profile: {
+    title: 'პროფილი',
+    userName: 'სოფიო კარტერი',
+    subtitle: 'შეგნებული მოგზაურობა',
+    joined: 'შეუერთდა 2022',
+    settings: 'პარამეტრები',
+    dayStreak: 'დღეების სერია',
+    ritualsCompleted: 'შესრულებული რიტუალები',
+    journalEntries: 'ჩანაწერები',
+    notifications: 'შეტყობინებები',
+    accountManagement: 'ანგარიშის მართვა',
+    helpSupport: 'დახმარება და მხარდაჭერა',
+    permissionRequired: 'გალერეაზე წვდომის ნებართვა საჭიროა!',
+  },
+  rituals: {
+    filters: {
+      all: 'ყველა',
+      gentle: 'ზრუნვიანი',
+      empowering: 'გამაძლიერებელი',
+      grounding: 'დამამშვიდებელი',
+      uplifting: 'ამაღელვებელი',
+      healing: 'მკურნალობითი',
+    },
+    phases: {
+      motherhood: 'დედობა',
+      any: 'ნებისმიერი ფაზა',
+      all: 'ყველა ფაზა'
+    },
+    minutes: 'წთ',
+    filterByTone: 'გაფილტრე ტონით',
+    lifePhase: 'ცხოვრებისეული ფაზა',
+    sacredRituals: 'წმინდა რიტუალები',
+    nurtureYourSoul: 'გაამახვილე სული ყოველდღიურ რიტუალებზე',
+    noRitualsFound: 'რიტუალები ვერ მოიძებნა',
+    searchYourPerfectRitual: 'იპოვე შენთვის სასურველი რიტუალი',
+    openHistory: 'რიტუალების ისტორიის ნახვა',
+  },
+  notifications: {
+    title: 'შეტყობინებები',
+    reset: 'გადატვირთვა',
+    cancel: 'გაუქმება',
+    resetTitle: 'პარამეტრების გადატვირთვა',
+    resetMessage: 'დარწმუნებული ხარ, რომ გინდა ყველა შეტყობინების პარამეტრის გადატვირთვა?',
+    mainNotifications: 'მთავარი შეტყობინებები',
+    goalsAchievements: 'მიზნები და მიღწევები',
+    optionalNotifications: 'დამატებითი შეტყობინებები',
+    dailyReminders: 'ყოველდღიური შეხსენებები',
+    dailyRemindersDesc: 'შეხსენება ყოველდღიური რიტუალების შესასრულებლად',
+    journalReminders: 'დღიურის შეხსენებები',
+    journalRemindersDesc: 'შეტყობინებები დღიურში ჩასაწერად',
+    meditationAlerts: 'მედიტაციის გაფრთხილებები',
+    meditationAlertsDesc: 'შეხსენება მედიტაციის სესიებისთვის',
+    weeklyGoals: 'კვირეული მიზნები',
+    weeklyGoalsDesc: 'კვირეული პროგრესის განახლებები',
+    achievementAlerts: 'მიღწევების გაფრთხილებები',
+    achievementAlertsDesc: 'დზღვნილება მიზნების მიღწევისას',
+    motivationalQuotes: 'მოტივაციური ციტატები',
+    motivationalQuotesDesc: 'ყოველდღიური შთამბეჭდავი მესიჯები',
+    systemUpdates: 'სისტემის განახლებები',
+    systemUpdatesDesc: 'მნიშვნელოვანი აპლიკაციის განახლებები',
+    marketingEmails: 'მარკეტინგული მეილები',
+    marketingEmailsDesc: 'პრომოციული შინაარსი და შეთავაზებები',
+  },
+  help: {
+    title: 'დახმარება',
+    faqTitle: 'ხშირად დასმული კითხვები',
+    question1: 'როგორ დავიწყო ყოველდღიური რიტუალი?',
+    answer1: 'გადადი მთავარ გვერდზე და დააჭირე "რიტუალის დაწყება"-ს. მიყევი ინსტრუქციებს.',
+    question2: 'შემიძლია მედიტაციის სესიების მორგება?',
+    answer2: 'დიახ! გადადი პარამეტრები > მედიტაციის პრეფერენციები და მოირგე ხანგრძლივობა და სხვა.',
+    question3: 'როგორ შევინახო დღიურის ჩანაწერები?',
+    answer3: 'დღიურის ჩანაწერები ავტომატურად სინქრონდება. შეგიძლია ექსპორტიც.',
+    contactTitle: 'დაგვიკავშირდი',
+    email: 'ელ-ფოსტის მხარდაჭერა',
+    website: 'დახმარების ვებსაიტი',
+    appInfoTitle: 'აპლიკაციის ინფორმაცია',
+    version: 'ვერსია',
+    buildNumber: 'Build ნომერი',
+    tipsTitle: 'პროფესიონალური რჩევები',
+    tip1: 'დააყენე რეგულარული შეხსენებები ჩვევის ჩამოყალიბებისთვის',
+    tip2: 'იყენებ პროგრესის ტრაკერი შენი განვითარების სანახავად',
+    tip3: 'ჩართე მუქი რეჟიმი საღამოობით გამოსაყენებლად',
+  },
+  password: {
+    title: 'პაროლის შეცვლა',
+    currentPassword: 'მიმდინარე პაროლი',
+    newPassword: 'ახალი პაროლი',
+    confirmPassword: 'პაროლის დადასტურება',
+    enterCurrentPassword: 'შეიყვანე მიმდინარე პაროლი',
+    enterNewPassword: 'შეიყვანე ახალი პაროლი',
+    confirmNewPassword: 'დაადასტურე ახალი პაროლი',
+    requirements: 'პაროლის მოთხოვნები',
+    minLength: 'მინიმუმ 8 სიმბოლო',
+    hasUpperCase: 'ერთი დიდი ასო',
+    hasLowerCase: 'ერთი პატარა ასო',
+    hasNumbers: 'ერთი რიცხვი',
+    hasSpecialChar: 'ერთი სპეციალური სიმბოლო',
+    securityTips: 'უსაფრთხოების რჩევები',
+    tip1: 'გამოიყენე უნიკალური პაროლი ამ აპისთვის',
+    tip2: 'შეცვალე პაროლი რეგულარულად',
+    tip3: 'არ გაუზიარო პაროლი სხვებს',
+    changePassword: 'პაროლის შეცვლა',
+    error: 'შეცდომა',
+    success: 'წარმატება',
+    fillAllFields: 'გთხოვთ შეავსო ყველა ველი',
+    passwordsDontMatch: 'პაროლები არ ემთხვევა',
+    weakPassword: 'პაროლი არ აკმაყოფილებს უსაფრთხოების მოთხოვნებს',
+    passwordChanged: 'პაროლი წარმატებით შეიცვალა',
+    ok: 'კარგი',
+  },
+  ritualDetails: {
+    helpful: 'სასარგებლო',
+    notReally: 'ძალიან არა',
+    rate: 'შეაფასე ეფექტურობა',
+    notes: 'შენიშვნები (სურვილისამებრ)',
+    notesPlaceholder: 'როგორ გრძნობ თავს ახლა?',
+    start: 'დაწყება',
+    starting: 'იწყება…',
+    done: 'დასრულდა',
+    saving: 'ინახება…',
+    saved: 'შენახულია. გმადლო გაზიარებისთვის.',
+    failedStart: 'რიტუალის დაწყება ვერ მოხერხდა',
+    failedSave: 'შენახვა ვერ მოხერხდა',
+    notFound: 'რიტუალი ვერ მოიძებნა.',
+  },
+  ritualHistory: {
+    back: 'უკან',
+    myRituals: 'ჩემი რიტუალები',
+    total: 'სულ',
+    helpful: 'სასარგებლო',
+    avgRating: 'საშ. ქულა',
+    notReally: 'ძალიან არა',
+    noHistory: 'ჯერჯერობით ისტორია არ არის.',
+  },
+  settings: {
+    title: 'პარამეტრები',
+    appearance: 'გარეგნობა',
+    darkMode: 'მუქი რეჟიმი',
+    darkModeDesc: 'ღია და მუქ თემებს შორის გადართვა',
+    language: 'ენა',
+    currentLanguage: 'ენა',
+    account: 'ანგარიში',
+    profile: 'პროფილი',
+    profileDesc: 'პროფილის ნახვა და რედაქტირება',
+    notifications: 'შეტყობინებები',
+    notificationsDesc: 'შეტყობინებების პარამეტრების მართვა',
+    security: 'უსაფრთხოება',
+    securityDesc: 'პაროლისა და უსაფრთხოების პარამეტრების შეცვლა',
+    support: 'მხარდაჭერა',
+    helpSupport: 'დახმარება',
+    helpSupportDesc: 'დახმარების მიღება და მხარდაჭერასთან კონტაქტი',
+  },
+
+};
+
+interface LanguageContextType {
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  t: typeof enTranslations;
+}
+
+const LanguageContext = createContext<LanguageContextType>({
+  language: 'en',
+  setLanguage: () => {},
+  t: enTranslations,
+});
+
+export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const [language, setLanguageState] = useState<Language>('en');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadLanguage();
+  }, []);
+
+  const loadLanguage = async () => {
+    try {
+      const savedLanguage = await AsyncStorage.getItem('user_language');
+      if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'ka')) {
+        setLanguageState(savedLanguage);
+      }
+    } catch (error) {
+      // Error loading language
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const setLanguage = async (newLanguage: Language) => {
+    try {
+      setLanguageState(newLanguage);
+      await AsyncStorage.setItem('user_language', newLanguage);
+      // Language changed
+    } catch (error) {
+      // Error saving language
+    }
+  };
+
+  if (isLoading) {
+    return null;
+  }
+
+  const t = language === 'ka' ? kaTranslations : enTranslations;
+
+  return (
+    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+}
+
+export function useLanguage() {
+  const context = useContext(LanguageContext);
+  if (!context) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
+  return context;
+}
+export default LanguageProvider;
