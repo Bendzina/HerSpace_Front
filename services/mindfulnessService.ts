@@ -19,6 +19,20 @@ export interface MindfulnessActivity {
   short_description_ka?: string;
 }
 
+export interface MindfulnessSession {
+  id: string | number;
+  activity: {
+    id: string | number;
+    title: string;
+    category: string;
+  };
+  started_at: string;
+  duration_minutes: number;
+  mood_before?: string;
+  mood_after?: string;
+  notes?: string;
+}
+
 export async function getMindfulnessActivities(language: string = 'en'): Promise<MindfulnessActivity[]> {
   console.log('Fetching mindfulness activities...');
   
@@ -94,6 +108,33 @@ export async function trackMindfulnessActivity(activityId: string | number): Pro
       message: 'Activity started successfully',
       activity: getSampleActivities('en').find(a => a.id === activityId) || getSampleActivities('en')[0]
     };
+  }
+}
+
+export async function getUserMindfulnessSessions(): Promise<MindfulnessSession[]> {
+  try {
+    const response = await authorizedFetch('/wellness/mindfulness/sessions/', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response && response.ok) {
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    } else if (response && response.status === 404) {
+      // If no sessions endpoint exists yet, return empty array
+      console.log('Sessions endpoint not found, returning empty array');
+      return [];
+    } else {
+      console.warn('Failed to fetch sessions:', response?.status);
+      return [];
+    }
+  } catch (error) {
+    console.warn('Error fetching sessions, returning empty array:', error);
+    return [];
   }
 }
 

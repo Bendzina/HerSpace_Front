@@ -3,9 +3,9 @@ import { useTheme } from '@/app/ThemeContext';
 import { translations } from '@/i18n/translations';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
+import { router } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Switch, Text, View } from 'react-native';
-import { router } from 'expo-router';
 
 export default function CustomDrawerContent(props: any) {
   const { isDark, setIsDark, colors } = useTheme();
@@ -21,7 +21,7 @@ export default function CustomDrawerContent(props: any) {
     { name: 'motherhood/index', label: t.motherhood, icon: 'woman-outline' },
     { name: 'rituals', label: t.rituals, icon: 'leaf-outline' },
     
-    { name: 'mindful', label: t.mindful, icon: 'medkit-outline' },
+    { name: 'mindful', label: t.mindful, icon: 'flower-outline' },
     { name: '(tabs)/community', label: 'Community', icon: 'people-outline' },
     { name: 'profile', label: t.profile, icon: 'person-circle-outline' },
     { name: 'HelpScreen', label: t.help, icon: 'help-circle-outline' },

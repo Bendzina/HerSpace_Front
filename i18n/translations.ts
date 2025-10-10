@@ -36,20 +36,24 @@ interface TranslationKeys {
   insights: string;
   login: string;
   notifications: string;
+  // Common UI actions & placeholders
   searchPlaceholder: string;
   new: string;
   save: string;
   delete: string;
   openLink: string;
+  // Filters
   all: string;
   online: string;
   local: string;
+  // Community
   support: string;
   celebration: string;
   advice: string;
   story: string;
   question: string;
   gratitude: string;
+  // Moods (shared labels)
   moodHappy: string;
   moodCalm: string;
   moodSad: string;
@@ -198,7 +202,7 @@ export const translations: { en: TranslationKeys; ka: TranslationKeys } = {
     profile: 'პროფილი',
     help: 'დახმარება',
     preferences: 'პარამეტრები',
-    mindful: 'ჩაფიქრებული',
+    mindful: 'ჰარმონია',
     settings: 'პარამეტრები',
     insights: 'ანალიტიკა',
     login: 'შესვლა',

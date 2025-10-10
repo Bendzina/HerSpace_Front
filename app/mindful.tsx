@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getMindfulnessActivities, MindfulnessActivity, trackMindfulnessActivity } from '../services/mindfulnessService';
+import { getMindfulnessActivities, MindfulnessActivity, MindfulnessSession } from '../services/mindfulnessService';
 import { useLanguage } from './LanguageContext';
 import { useTheme } from './ThemeContext';
 const { width } = Dimensions.get('window');
@@ -25,6 +25,7 @@ export default function MindfulScreen() {
   const [activities, setActivities] = useState<MindfulnessActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [recentSessions, setRecentSessions] = useState<MindfulnessSession[]>([]);
 
   const loadActivities = useCallback(async () => {
     try {
@@ -57,7 +58,7 @@ export default function MindfulScreen() {
     try {
       setSelectedActivity(activity.id.toString());
       // Track the activity start
-      await trackMindfulnessActivity(activity.id);
+      // await trackMindfulnessActivity(activity.id);  // Temporarily disabled
       
       // Navigate to the activity screen
       router.push({
@@ -229,28 +230,6 @@ export default function MindfulScreen() {
               </Text>
             </View>
           )}
-        </View>
-
-        {/* Recent Sessions */}
-        <View style={styles.recentHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            {language === 'ka' ? 'ბოლო სესიები' : 'Recent Sessions'}
-          </Text>
-        </View>
-
-        <View style={[styles.recentCard, { backgroundColor: colors.surface }]}>
-          <View style={styles.recentItem}>
-            <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-            <Text style={[styles.recentText, { color: colors.text }]}>
-              {language === 'ka' ? 'სუნთქვის ვარჯიში • 5 წუთის წინ' : 'Breathing Exercise • 5 min ago'}
-            </Text>
-          </View>
-          <View style={styles.recentItem}>
-            <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-            <Text style={[styles.recentText, { color: colors.text }]}>
-              {language === 'ka' ? 'მედიტაცია • გუშინ' : 'Meditation • Yesterday'}
-            </Text>
-          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
