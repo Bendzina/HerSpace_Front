@@ -12,8 +12,22 @@ import { checkEmailVerification } from '../services/authService';
 import CustomDrawerContent from '@/components/navigation/CustomDrawerContent';
 import { translations } from '@/i18n/translations';
 import { Ionicons } from '@expo/vector-icons';
+import { lazy, Suspense } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { LanguageProvider, useLanguage } from './LanguageContext';
 import { ThemeProvider, useTheme } from './ThemeContext';
+
+// Lazy load heavy screens for better performance
+const MindfulScreen = lazy(() => import('../app/mindful'));
+const ProfileScreen = lazy(() => import('../app/(tabs)/ProfileScreen'));
+const JournalScreen = lazy(() => import('../app/(tabs)/journal/new-entry'));
+
+// Loading component for Suspense fallback
+const LoadingSpinner = () => (
+  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <ActivityIndicator size="large" color="#8B5CF6" />
+  </View>
+);
 
 function InnerDrawer() {
   const { colors } = useTheme();
@@ -161,7 +175,14 @@ function InnerDrawer() {
         name="mindful"
         options={{
           title: t.mindful || 'Mindful',
-          drawerIcon: ({ color, size }) => (<Ionicons name="medkit-outline" size={size} color={color} />)
+          drawerIcon: ({ color, size }) => (<Ionicons name="flower-outline" size={size} color={color} />)
+        }}
+      />
+      <Drawer.Screen
+        name="motherhood/journal/new"
+        options={{
+          title: t.journal || 'Journal',
+          drawerIcon: ({ color, size }) => (<Ionicons name="book-outline" size={size} color={color} />)
         }}
       />
       <Drawer.Screen
@@ -211,7 +232,9 @@ export default function RootLayout() {
         <ThemeProvider>
           <LanguageProvider>
             <StatusBar style="auto" />
-            <InnerDrawer />
+            <Suspense fallback={<LoadingSpinner />}>
+              <InnerDrawer />
+            </Suspense>
           </LanguageProvider>
         </ThemeProvider>
       </AuthProvider>
