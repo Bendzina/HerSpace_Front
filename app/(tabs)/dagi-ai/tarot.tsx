@@ -16,6 +16,7 @@ import {
   View
 } from 'react-native';
 import dagiAIService from '../../../services/dagiAIService';
+import TarotInstructionsModal from '@/components/TarotInstructionsModal';
 import { useLanguage } from '../../LanguageContext';
 import { useTheme } from '../../ThemeContext';
 
@@ -53,9 +54,10 @@ export default function TarotScreen() {
   const [loading, setLoading] = useState(false);
   const [resultText, setResultText] = useState<string>('');
   const [cards, setCards] = useState<TarotAPICard[] | null>(null);
+  const [showInstructions, setShowInstructions] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const colorScheme = useColorScheme();
-  
+
   // Extend the base colors with additional properties
   const baseColors = Colors[colorScheme || 'light'];
   const colors = {
@@ -66,11 +68,11 @@ export default function TarotScreen() {
     textSecondary: baseColors.tabIconDefault,
     primary: colorScheme === 'dark' ? '#BB86FC' : '#6200EE',
   };
-  
+
   // Animation values
   const shimmerAnim = useRef(new Animated.Value(0)).current;
   const [cardAnims, setCardAnims] = useState<Animated.Value[]>([]);
-  
+
   // Initialize card animations when cards change
   useEffect(() => {
     if (cards && cards.length > 0) {
@@ -90,14 +92,14 @@ export default function TarotScreen() {
   const getTarotReading = async (question: string, readingType: string) => {
     try {
       // Use a more structured prompt that specifies spread positions for better AI interpretation
-      const spreadStructure = selectedCardCount === 1 
-        ? 'single card' 
-        : selectedCardCount === 3 
-        ? 'three card spread (past, present, future)' 
-        : selectedCardCount === 5 
-        ? 'five card spread (past, present, challenge, outcome, advice)' 
+      const spreadStructure = selectedCardCount === 1
+        ? 'single card'
+        : selectedCardCount === 3
+        ? 'three card spread (past, present, future)'
+        : selectedCardCount === 5
+        ? 'five card spread (past, present, challenge, outcome, advice)'
         : `Celtic Cross spread with ${selectedCardCount} cards`;
-      
+
       const prompt = `Provide a tarot reading using ${spreadStructure} for the question: "${question}". Include interpretation for each card position and overall guidance.`;
       const response = await dagiAIService.sendMessage(prompt);
       return response;
@@ -143,7 +145,7 @@ export default function TarotScreen() {
         useNativeDriver: true,
       })
     );
-    
+
     Animated.stagger(100, animations).start();
   };
 
@@ -178,16 +180,16 @@ export default function TarotScreen() {
         setResultText(response.message);
       } else {
         setResultText(
-          language === 'ka' 
-            ? 'ვერ მოხერხდა გაშლა.' 
+          language === 'ka'
+            ? 'ვერ მოხერხდა გაშლა.'
             : 'Could not get a reading.'
         );
       }
     } catch (e) {
       console.error('Tarot reading error:', e);
       setResultText(
-        language === 'ka' 
-          ? 'შეცდომა. სცადე თავიდან.' 
+        language === 'ka'
+          ? 'შეცდომა. სცადე თავიდან.'
           : 'Error. Please try again.'
       );
     } finally {
@@ -219,13 +221,15 @@ export default function TarotScreen() {
               <Text style={styles.headerTitle}>{t.ai?.tarot ?? 'Tarot Reading'}</Text>
               <Ionicons name="sparkles" size={20} color="#FFD700" style={{ marginLeft: 8 }} />
             </View>
-            <View style={{ width: 24 }} />
+            <TouchableOpacity onPress={() => setShowInstructions(true)} style={styles.instructionsBtn}>
+              <Ionicons name="information-circle" size={24} color="#FFF" />
+            </TouchableOpacity>
           </View>
         </LinearGradient>
 
-        <ScrollView 
-          ref={scrollRef} 
-          style={styles.content} 
+        <ScrollView
+          ref={scrollRef}
+          style={styles.content}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
@@ -237,20 +241,20 @@ export default function TarotScreen() {
                 {language === 'ka' ? 'თქვენი კითხვა' : 'Your Question'}
               </Text>
             </View>
-            <Text style={[styles.instructionText, { color: colors.textSecondary }]}>
-              {language === 'ka' 
-                ? 'ჩაისუნთქეთ ცხვირით, ამოისუნთქეთ პირით, 3-ჯერ და დაფიქრდით თქვენს კითხვაზე სუფთა გულით' 
+            {/* <Text style={[styles.instructionText, { color: colors.textSecondary }]}>
+              {language === 'ka'
+                ? 'ჩაისუნთქეთ ცხვირით, ამოისუნთქეთ პირით, 3-ჯერ და დაფიქრდით თქვენს კითხვაზე სუფთა გულით'
                 : 'Inhale through your nose and exhale through your mouth 3 times and think about your question with a pure heart.'}
-            </Text>
+            </Text> */}
             <TextInput
-              style={[styles.input, { 
-                color: colors.text, 
-                backgroundColor: colors.background, 
-                borderColor: colors.tabIconDefault 
+              style={[styles.input, {
+                color: colors.text,
+                backgroundColor: colors.background,
+                borderColor: colors.tabIconDefault
               }]}
               value={tarotQuestion}
               onChangeText={setTarotQuestion}
-              placeholder={language === 'ka' ? 'დასვი შენი შეკითხვა ვარსკვლავებს...' : 'Ask the stars your question...'}
+              placeholder={language === 'ka' ? 'დაუსვი შენი შეკითხვა ვარსკვლავებს...' : 'Ask the stars your question...'}
               placeholderTextColor={colors.tabIconDefault}
               multiline
             />
@@ -272,21 +276,21 @@ export default function TarotScreen() {
                     styles.countButton,
                     selectedCardCount === option.value && styles.countButtonSelected,
                     { borderColor: colors.primary },
-                    selectedCardCount === option.value && { 
+                    selectedCardCount === option.value && {
                       backgroundColor: colors.primary,
-                      borderColor: colors.primary 
+                      borderColor: colors.primary
                     },
                   ]}
                   onPress={() => setSelectedCardCount(option.value)}
                 >
-                  <Ionicons 
-                    name={option.icon as any} 
-                    size={20} 
-                    color={selectedCardCount === option.value ? '#fff' : colors.primary} 
+                  <Ionicons
+                    name={option.icon as any}
+                    size={20}
+                    color={selectedCardCount === option.value ? '#fff' : colors.primary}
                   />
                   <Text style={[
                     styles.countButtonText,
-                    { 
+                    {
                       color: selectedCardCount === option.value ? '#fff' : colors.text,
                     },
                   ]}>
@@ -320,14 +324,14 @@ export default function TarotScreen() {
                   ]}
                 />
               )}
-              <Ionicons 
-                name={loading ? 'hourglass' : 'sparkles'} 
-                size={22} 
-                color="#FFF" 
+              <Ionicons
+                name={loading ? 'hourglass' : 'sparkles'}
+                size={22}
+                color="#FFF"
               />
               <Text style={styles.drawText}>
-                {loading 
-                  ? (language === 'ka' ? 'კარტები იშლება...' : 'Reading the cards...') 
+                {loading
+                  ? (language === 'ka' ? 'კარტები იშლება...' : 'Reading the cards...')
                   : (language === 'ka' ? '🔮 გაშლა' : '🔮 Draw Cards')}
               </Text>
             </LinearGradient>
@@ -362,8 +366,8 @@ export default function TarotScreen() {
                     key={idx}
                     style={[
                       styles.tarotCard,
-                      { 
-                        backgroundColor: colors.surface, 
+                      {
+                        backgroundColor: colors.surface,
                         borderColor: card.is_major_arcana ? '#FFD700' : colors.border,
                         transform: [{ scale }],
                         opacity,
@@ -371,8 +375,8 @@ export default function TarotScreen() {
                     ]}
                   >
                     <LinearGradient
-                      colors={card.is_major_arcana 
-                        ? ['#FFD700', '#FFA000', '#FF6F00'] 
+                      colors={card.is_major_arcana
+                        ? ['#FFD700', '#FFA000', '#FF6F00']
                         : ['#9C27B0', '#7B1FA2']
                       }
                       start={{ x: 0, y: 0 }}
@@ -409,249 +413,258 @@ export default function TarotScreen() {
             </View>
           ) : null}
         </ScrollView>
+        <TarotInstructionsModal
+          visible={showInstructions}
+          onClose={() => setShowInstructions(false)}
+        />
       </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-    container: { 
-      flex: 1 
-    },
-    header: {
-      paddingTop: Platform.OS === 'ios' ? 50 : 20,
-      paddingBottom: 20,
-      borderBottomLeftRadius: 24,
-      borderBottomRightRadius: 24,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 8,
-      elevation: 8,
-    },
-    headerOverlay: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 16,
-    },
-    backBtn: { 
-      padding: 8,
-      borderRadius: 12,
-      backgroundColor: 'rgba(255,255,255,0.2)',
-    },
-    headerCenter: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    headerTitle: { 
-      fontSize: 20, 
-      fontWeight: '700', 
-      color: '#FFF',
-      letterSpacing: 0.5,
-    },
-    content: { flex: 1 },
-    contentContainer: { 
-      padding: 16,
-      paddingBottom: 32,
-    },
-    card: {
-      borderRadius: 16,
-      borderWidth: 1,
-      padding: 16,
-      marginBottom: 16,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 8,
-      elevation: 3,
-    },
-    cardHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 12,
-    },
-    sectionTitle: {
-      fontSize: 16,
-      fontWeight: '700',
-      marginLeft: 8,
-    },
-    instructionText: {
-      fontSize: 14,
-      fontStyle: 'italic',
-      marginBottom: 12,
-      textAlign: 'center',
-    },
-    input: {
-      minHeight: 100,
-      borderWidth: 1,
-      borderRadius: 12,
-      padding: 14,
-      fontSize: 16,
-      textAlignVertical: 'top',
-    },
-    countGrid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-      marginTop: 8,
-    },
-    countButton: {
-      width: '48%',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: 12,
-      borderRadius: 12,
-      borderWidth: 1,
-      marginBottom: 12,
-      backgroundColor: 'transparent',
-    },
-    countButtonSelected: {
-      shadowColor: '#6200EE',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.3,
-      shadowRadius: 4,
-      elevation: 2,
-    },
-    countButtonText: {
-      marginLeft: 8,
-      fontSize: 14,
-      fontWeight: '600',
-    },
-    drawBtnContainer: {
-      marginBottom: 16,
-    },
-    drawBtn: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: 16,
-      paddingVertical: 16,
-      shadowColor: '#9C27B0',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 8,
-      elevation: 6,
-      overflow: 'hidden',
-    },
-    shimmer: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(255,255,255,0.3)',
-      width: '30%',
-    },
-    drawText: { 
-      marginLeft: 10, 
-      color: '#FFF', 
-      fontWeight: '700',
-      fontSize: 16,
-      letterSpacing: 0.5,
-    },
-    resultCard: {
-      borderRadius: 16,
-      borderWidth: 2,
-      padding: 20,
-      marginBottom: 16,
-      shadowColor: '#9C27B0',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.2,
-      shadowRadius: 8,
-      elevation: 4,
-    },
-    resultHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 16,
-      paddingBottom: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: 'rgba(156, 39, 176, 0.2)',
-    },
-    resultTitle: {
-      fontSize: 18,
-      fontWeight: '700',
-      marginLeft: 10,
-    },
-    resultText: { 
-      fontSize: 15, 
-      lineHeight: 24,
-      letterSpacing: 0.3,
-    },
-    cardsContainer: {
-      gap: 12,
-    },
-    tarotCard: {
-      borderRadius: 16,
-      borderWidth: 2,
-      overflow: 'hidden',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.15,
-      shadowRadius: 8,
-      elevation: 4,
-    },
-    cardGradient: {
-      padding: 16,
-      minHeight: 120,
-      justifyContent: 'center',
-    },
-    reversedBadge: {
-      position: 'absolute',
-      top: 12,
-      right: 12,
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0,0,0,0.3)',
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 12,
-    },
-    reversedText: {
-      color: '#FFF',
-      fontSize: 11,
-      fontWeight: '600',
-      marginLeft: 4,
-    },
-    cardName: {
-      fontSize: 20,
-      fontWeight: '700',
-      color: '#FFF',
-      marginBottom: 6,
-      textShadowColor: 'rgba(0,0,0,0.3)',
-      textShadowOffset: { width: 0, height: 1 },
-      textShadowRadius: 3,
-    },
-    cardSuit: {
-      fontSize: 14,
-      color: 'rgba(255,255,255,0.9)',
-      fontWeight: '500',
-    },
-    majorBadge: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: 8,
-      backgroundColor: 'rgba(255,215,0,0.2)',
-      alignSelf: 'flex-start',
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 12,
-    },
-    majorText: {
-      color: '#FFD700',
-      fontSize: 11,
-      fontWeight: '700',
-      marginLeft: 4,
-    },
-    cardMeaningContainer: {
-      padding: 14,
-      backgroundColor: 'rgba(156, 39, 176, 0.05)',
-    },
-    cardMeaning: {
-      fontSize: 14,
-      lineHeight: 20,
-      fontStyle: 'italic',
-    },
-  });
+  container: {
+    flex: 1
+  },
+  header: {
+    paddingTop: Platform.OS === 'ios' ? 50 : 20,
+    paddingBottom: 20,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  headerOverlay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+  },
+  backBtn: {
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  headerCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFF',
+    letterSpacing: 0.5,
+  },
+  instructionsBtn: {
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  content: { flex: 1 },
+  contentContainer: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  card: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginLeft: 8,
+  },
+  instructionText: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  input: {
+    minHeight: 100,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+    textAlignVertical: 'top',
+  },
+  countGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  countButton: {
+    width: '48%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 12,
+    backgroundColor: 'transparent',
+  },
+  countButtonSelected: {
+    shadowColor: '#6200EE',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  countButtonText: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  drawBtnContainer: {
+    marginBottom: 16,
+  },
+  drawBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    paddingVertical: 16,
+    shadowColor: '#9C27B0',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+    overflow: 'hidden',
+  },
+  shimmer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    width: '30%',
+  },
+  drawText: {
+    marginLeft: 10,
+    color: '#FFF',
+    fontWeight: '700',
+    fontSize: 16,
+    letterSpacing: 0.5,
+  },
+  resultCard: {
+    borderRadius: 16,
+    borderWidth: 2,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#9C27B0',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  resultHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(156, 39, 176, 0.2)',
+  },
+  resultTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginLeft: 10,
+  },
+  resultText: {
+    fontSize: 15,
+    lineHeight: 24,
+    letterSpacing: 0.3,
+  },
+  cardsContainer: {
+    gap: 12,
+  },
+  tarotCard: {
+    borderRadius: 16,
+    borderWidth: 2,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  cardGradient: {
+    padding: 16,
+    minHeight: 120,
+    justifyContent: 'center',
+  },
+  reversedBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  reversedText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  cardName: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFF',
+    marginBottom: 6,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  cardSuit: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '500',
+  },
+  majorBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    backgroundColor: 'rgba(255,215,0,0.2)',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  majorText: {
+    color: '#FFD700',
+    fontSize: 11,
+    fontWeight: '700',
+    marginLeft: 4,
+  },
+  cardMeaningContainer: {
+    padding: 14,
+    backgroundColor: 'rgba(156, 39, 176, 0.05)',
+  },
+  cardMeaning: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontStyle: 'italic',
+  },
+});
