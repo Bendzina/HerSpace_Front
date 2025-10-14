@@ -42,6 +42,7 @@ type ListParams = {
   emotional_tone?: EmotionalTone | 'all';
   ritual_type?: RitualType;
   is_for_beginners?: boolean;
+  language?: string; // Add language filtering
 };
 
 function toQuery(params?: ListParams): string {
@@ -53,6 +54,7 @@ function toQuery(params?: ListParams): string {
   if (params.emotional_tone && params.emotional_tone !== 'all') q.set('emotional_tone', String(params.emotional_tone));
   if (params.ritual_type) q.set('ritual_type', String(params.ritual_type));
   if (typeof params.is_for_beginners === 'boolean') q.set('is_for_beginners', String(params.is_for_beginners));
+  if (params.language) q.set('language', String(params.language));
   const s = q.toString();
   return s ? `?${s}` : '';
 }

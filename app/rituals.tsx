@@ -11,7 +11,7 @@ const { width } = Dimensions.get('window');
 
 export default function RitualsScreen() {
   const { colors } = useTheme();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
   
   // Get translations for tones and phases
@@ -29,26 +29,19 @@ export default function RitualsScreen() {
     { id: 'uplifting', label: toneLabels.uplifting, emoji: '☀️', gradient: ['#F8B500', '#FFD700'] },
     { id: 'healing', label: toneLabels.healing, emoji: '💜', gradient: ['#DDA0DD', '#E6E6FA'] },
   ] as const;
-  
-  const phases = [
-    { id: 'motherhood', label: phaseLabels.motherhood, emoji: '🤱', color: '#FF6B9D' },
-    { id: 'any', label: phaseLabels.any, emoji: '🌟', color: '#8B5CF6' },
-    { id: 'all', label: phaseLabels.all, emoji: '🌙', color: '#06B6D4' },
-  ] as const;
-  
+
   const [tone, setTone] = React.useState<(typeof tones)[number]['id']>('all');
-  const [phase, setPhase] = React.useState<(typeof phases)[number]['id']>('motherhood');
   const [items, setItems] = React.useState<Ritual[]>([]);
 
   const fetchData = React.useCallback(async () => {
     const data = await listRituals({
       ordering: '-created_at',
       search: search || undefined,
-      for_life_phase: phase,
       emotional_tone: tone,
+      language: language, // Add language filtering
     });
     setItems(Array.isArray(data) ? data : []);
-  }, [search, phase, tone]);
+  }, [search, tone, language]);
 
   React.useEffect(() => {
     (async () => {
@@ -192,35 +185,6 @@ export default function RitualsScreen() {
             returnKeyType="search"
           />
         </View>
-
-        {/* Life phase filter */}
-        <Text style={[styles.sectionTitle, { color: colors.primary }]}>{t.rituals.lifePhase}</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
-          <View style={styles.filterRow}>
-            {phases.map(p => {
-              const active = phase === p.id;
-              return (
-                <TouchableOpacity
-                  key={p.id}
-                  onPress={() => setPhase(p.id)}
-                  style={[
-                    styles.phaseChip,
-                    {
-                      backgroundColor: active ? p.color : colors.surface,
-                      borderColor: active ? p.color : colors.border,
-                    }
-                  ]}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.phaseEmoji}>{p.emoji}</Text>
-                  <Text style={[styles.phaseText, { color: active ? '#fff' : colors.text }]}>
-                    {p.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </ScrollView>
 
         {/* Tone filter */}
         <Text style={[styles.sectionTitle, { color: colors.primary }]}>{t.rituals.filterByTone}</Text>
