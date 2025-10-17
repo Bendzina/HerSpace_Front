@@ -54,7 +54,7 @@ export interface DagiAIResponse {
 }
 
 class DagiAIService {
-  private readonly baseUrl = 'http://192.168.100.7:8000/api/journal';
+  private readonly baseUrl = 'http://192.168.100.5:8000/api/journal';
 
   /**
    * Send a message to Dagi AI (handles both general chat and tarot requests)

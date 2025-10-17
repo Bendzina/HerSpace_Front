@@ -20,8 +20,6 @@ export async function clearStoredTokens() {
     await AsyncStorage.multiRemove(["access_token", "refresh_token", "user_data"]);
   } catch {}
 }
-
-// Refresh the access token using the stored refresh token
 async function refreshAccessToken(): Promise<string> {
   const refresh = await AsyncStorage.getItem("refresh_token");
   if (!refresh) throw new Error('No refresh token');
@@ -321,7 +319,7 @@ export async function resendVerificationEmail(email: string): Promise<void> {
       throw new Error(data.detail || 'Failed to resend verification email');
     }
 
-    return data;
+    console.log('Verification email sent successfully');
   } catch (error) {
     console.error('Error resending verification email:', error);
     throw error;
