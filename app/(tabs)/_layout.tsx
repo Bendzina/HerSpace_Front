@@ -1,4 +1,3 @@
-
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,15 +5,17 @@ import { DrawerActions } from '@react-navigation/native';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
+import { useLanguage } from '../LanguageContext';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-
+  const { t } = useLanguage();
+  
   return (
     <Tabs
       screenOptions={({ navigation }) => ({
-        tabBarActiveTintColor: colors.tint, // იგივე რაც Dagi AI-ში
+        tabBarActiveTintColor: colors.tint,
         tabBarInactiveTintColor: colors.tabIconDefault,
         tabBarStyle: {
           backgroundColor: colors.background,
@@ -60,7 +61,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: t.common.start,
           tabBarIcon: ({ color }) => (
             <Ionicons name="home" size={22} color={color} />
           ),
@@ -69,7 +70,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="ProfileScreen"
         options={{
-          title: 'Profile',
+          title: t.profile.title,
           tabBarIcon: ({ color }) => (
             <Ionicons name="person" size={22} color={color} />
           ),
@@ -78,7 +79,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="journal"
         options={{
-          title: 'Journal',
+          title: t.journal,
           tabBarIcon: ({ color }) => (
             <Ionicons name="book" size={22} color={color} />
           ),
@@ -94,24 +95,22 @@ export default function TabLayout() {
           ),
         }}
       />
-      {/* Hide nested dagi-ai routes from tab bar */}
       <Tabs.Screen
         name="dagi-ai/tarot"
         options={{
-          href: null, // Hide from tab bar
+          href: null,
+          title: 'Tarot Reading',
         }}
       />
       <Tabs.Screen
         name="community"
         options={{
-          title: 'Community',
+          title: t.community,
           tabBarIcon: ({ color }) => (
             <Ionicons name="people" size={22} color={color} />
           ),
         }}
       />
-      {/* Progress moved to app directory, not in tabs */}
-      {/* Mood tab removed: Flow goes Home -> FocusScreen -> MoodScreen, no direct tab */}
     </Tabs>
   );
 }

@@ -1,5 +1,5 @@
-import { authorizedFetch } from './authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authorizedFetch } from './authService';
 
 export interface TarotCard {
   id: number;
@@ -54,7 +54,7 @@ export interface DagiAIResponse {
 }
 
 class DagiAIService {
-  private readonly baseUrl = 'http://192.168.100.5:8000/api/journal';
+  private readonly baseUrl = 'http://192.168.100.4:8000/api/journal';
 
   /**
    * Send a message to Dagi AI (handles both general chat and tarot requests)
