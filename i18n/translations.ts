@@ -59,6 +59,15 @@ interface TranslationKeys {
   moodSad: string;
   moodAnxious: string;
 
+  // Community screen texts
+  communityHeroTitle: string;
+  communityHeroSubtitle: string;
+  communitySearchPlaceholder: string;
+  communityLoadingText: string;
+  communityCategories: string;
+  communityNoPosts: string;
+  communityNoPostsDescription: string;
+
   // Notifications
   notificationSettings: {
     resetTitle: string;
@@ -141,6 +150,14 @@ export const translations: { en: TranslationKeys; ka: TranslationKeys } = {
     story: 'Story',
     question: 'Question',
     gratitude: 'Gratitude',
+    // Community screen texts
+    communityHeroTitle: '💕 Our Safe Space',
+    communityHeroSubtitle: 'Share, support, and grow together',
+    communitySearchPlaceholder: 'Search our community stories...',
+    communityLoadingText: 'Loading our community...',
+    communityCategories: 'Categories',
+    communityNoPosts: 'No posts yet',
+    communityNoPostsDescription: 'Be the first to share your story',
     // Moods (shared labels)
     moodHappy: 'Happy',
     moodCalm: 'Calm',
@@ -221,6 +238,14 @@ export const translations: { en: TranslationKeys; ka: TranslationKeys } = {
     story: 'ისტორია',
     question: 'კითხვა',
     gratitude: 'მადლიერება',
+    // Community screen texts
+    communityHeroTitle: '💕 ჩვენი უსაფრთხო სივრცე',
+    communityHeroSubtitle: 'გააზიარეთ, დაუჭირეთ მხარი და გაიზარდეთ ერთად',
+    communitySearchPlaceholder: 'მოძებნეთ ჩვენი თემის ისტორიები...',
+    communityLoadingText: 'იტვირთება ჩვენი თემი...',
+    communityCategories: 'კატეგორიები',
+    communityNoPosts: 'ჯერჯერობით პოსტები არ არის',
+    communityNoPostsDescription: 'იყავით პირველი ვინც გააზიარებს თქვენს ისტორიას',
     moodHappy: 'ბედნიერი',
     moodCalm: 'მშვიდი',
     moodSad: 'სევდიანი',

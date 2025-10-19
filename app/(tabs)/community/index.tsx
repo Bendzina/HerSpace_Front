@@ -153,37 +153,40 @@ export default function CommunityFeedScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Hide the default header */}
       <Stack.Screen 
         options={{ 
-          title: 'Community',
-          headerTitleStyle: { fontSize: 24, fontWeight: '700' },
-          headerRight: () => (
-            <TouchableOpacity 
-              onPress={() => router.push('/community/new' as never)} 
-              style={styles.headerButton}
-            >
-              <LinearGradient
-                colors={['#FF6B9D', '#C44569']}
-                style={styles.headerButtonGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
-                <Ionicons name="add" size={20} color="#fff" />
-              </LinearGradient>
-            </TouchableOpacity>
-          )
+          headerShown: false
         }} 
       />
 
-      {/* Hero Section */}
+      {/* Hero Section with Add Button */}
       <LinearGradient
         colors={['#FFE5F1', '#F8E8FF', '#E8F4FD']}
         style={styles.heroSection}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        <Text style={styles.heroTitle}>💕 Our Safe Space</Text>
-        <Text style={styles.heroSubtitle}>Share, support, and grow together</Text>
+        <View style={styles.heroContent}>
+          <View style={styles.heroTextContainer}>
+            <Text style={styles.heroTitle}>💕 Our Safe Space</Text>
+            <Text style={styles.heroSubtitle}>Share, support, and grow together</Text>
+          </View>
+          <TouchableOpacity 
+            onPress={() => router.push('/community/new' as never)} 
+            style={styles.addButton}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#FF6B9D', '#C44569']}
+              style={styles.addButtonGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <Ionicons name="add" size={28} color="#fff" />
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
       </LinearGradient>
 
       {/* Search and Filters */}
@@ -281,7 +284,8 @@ const styles = StyleSheet.create({
   },
   heroSection: {
     paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingTop: 60, // Space for status bar
+    paddingBottom: 32,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     shadowColor: '#000',
@@ -290,28 +294,39 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  heroContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  heroTextContainer: {
+    flex: 1,
+  },
   heroTitle: {
     fontSize: 28,
     fontWeight: '700',
     color: '#2D3748',
-    textAlign: 'center',
     marginBottom: 8,
   },
   heroSubtitle: {
     fontSize: 16,
     color: '#718096',
-    textAlign: 'center',
     fontWeight: '500',
   },
-  headerButton: {
-    marginRight: 8,
+  addButton: {
+    marginLeft: 16,
   },
-  headerButtonGradient: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  addButtonGradient: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#FF6B9D',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   filtersContainer: {
     paddingHorizontal: 20,
