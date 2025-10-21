@@ -13,7 +13,7 @@ export interface CommunityPost {
   comment_count?: number;
   reaction_count?: number;
   user_reactions?: string[]; // Array of reaction types the current user has reacted with
-  user?: { id: number; name: string };
+  user?: { id: number; name: string; profile_image?: string };
 }
 
 export interface ListPostParams {

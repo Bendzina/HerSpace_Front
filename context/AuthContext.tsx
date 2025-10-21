@@ -80,6 +80,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (userData) {
         console.log('Storing user data:', userData);
+        console.log('Profile image in userData:', userData.profileImage);
         await AsyncStorage.setItem("user_data", JSON.stringify(userData));
         setUser(userData);
         console.log('AuthContext: Login successful');

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, RefreshControl, ActivityIndicator, ScrollView, Dimensions } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
+import { Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/app/ThemeContext';
 import { useLanguage } from '@/app/LanguageContext';
@@ -98,9 +99,63 @@ export default function CommunityFeedScreen() {
     >
       {/* Card Header */}
       <View style={styles.cardHeader}>
-        <View style={[styles.postTypeIcon, { backgroundColor: getPostGradient(item.post_type)[0] + '40' }]}>
+        {/* Author Profile Section */}
+        {item.user && !item.is_anonymous ? (
+          <View style={styles.authorSection}>
+            <View style={styles.authorAvatar}>
+              {item.user.profile_image ? (
+                (() => {
+                  try {
+                    const imageUri = item.user.profile_image.startsWith('http') 
+                      ? item.user.profile_image 
+                      : `${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.100.4:8000'}${item.user.profile_image}`;
+                    
+                    console.log('Profile image URI:', imageUri, 'Original:', item.user.profile_image);
+                    
+                    return (
+                      <Image
+                        source={{ uri: imageUri }}
+                        style={styles.authorAvatarImage}
+                        resizeMode="cover"
+                      />
+                    );
+                  } catch (error) {
+                    console.error('Error rendering profile image:', error, item.user.profile_image);
+                    return (
+                      <View style={[styles.authorAvatarPlaceholder, { backgroundColor: colors.border }]}>
+                        <Text style={[styles.authorAvatarText, { color: colors.textSecondary }]}>
+                          {item.user.name.charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                    );
+                  }
+                })()
+              ) : (
+                <View style={[styles.authorAvatarPlaceholder, { backgroundColor: colors.border }]}>
+                  <Text style={[styles.authorAvatarText, { color: colors.textSecondary }]}>
+                    {item.user.name.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.authorInfo}>
+              <Text style={[styles.authorName, { color: colors.text }]}>
+                {item.user.name}
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.anonymousSection}>
+            <Text style={[styles.anonymousText, { color: colors.textSecondary }]}>
+              Anonymous
+            </Text>
+          </View>
+        )}
+
+        <View style={styles.postTypeIcon}>
           <Text style={styles.postEmoji}>{getPostEmoji(item.post_type)}</Text>
         </View>
+
         <View style={styles.headerInfo}>
           <View style={styles.postTypeBadge}>
             <Text style={[styles.postTypeText, { color: chips.find(c => c.id === item.post_type)?.color || '#FF6B9D' }]}>
@@ -415,8 +470,57 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 16,
+  },
+  authorSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 12,
+    flex: 1,
+  },
+  authorAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  authorAvatarImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+  authorAvatarPlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  authorAvatarText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  authorInfo: {
+    flex: 1,
+  },
+  authorName: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  anonymousSection: {
+    flex: 1,
+    marginRight: 12,
+  },
+  anonymousText: {
+    fontSize: 14,
+    fontWeight: '500',
+    fontStyle: 'italic',
   },
   postTypeIcon: {
     width: 48,

@@ -157,26 +157,41 @@ export default function CommunityDetailScreen() {
 
   const loadAll = React.useCallback(async () => {
     if (!id) return;
-    const [p, cs, rs] = await Promise.all([
-      getCommunityPost(id),
-      listCommunityComments(id),
-      listCommunityReactions(id),
-    ]);
-    setPost(p);
-    setComments(cs || []);
-    
-    // Changed: user can only have one reaction
-    const userReactions = (p.user_reactions || []) as ReactionType[];
-    setUserReaction(userReactions.length > 0 ? userReactions[0] : null);
-    
-    const counts: Record<ReactionType, number> = { heart: 0, support: 0, prayer: 0, celebration: 0, hug: 0 };
-    const users: Record<ReactionType, CommunityReaction[]> = { heart: [], support: [], prayer: [], celebration: [], hug: [] };
-    (rs || []).forEach(r => {
-      counts[r.reaction_type] = (counts[r.reaction_type] || 0) + 1;
-      users[r.reaction_type].push(r);
-    });
-    setReactions(counts);
-    setReactionsWithUsers(users);
+    try {
+      const [p, cs, rs] = await Promise.all([
+        getCommunityPost(id),
+        listCommunityComments(id),
+        listCommunityReactions(id),
+      ]);
+
+      console.log('Loaded comments:', cs?.length || 0, cs);
+      setPost(p);
+
+      // Fix: Force state update with new array reference
+      const newComments = cs ? [...cs] : [];
+      setComments(newComments);
+      console.log('Comments state set to:', newComments.length);
+
+      // Force re-render by updating a dummy state
+      setTimeout(() => {
+        console.log('Verifying comments state:', comments.length);
+      }, 100);
+
+      // Changed: user can only have one reaction
+      const userReactions = (p.user_reactions || []) as ReactionType[];
+      setUserReaction(userReactions.length > 0 ? userReactions[0] : null);
+
+      const counts: Record<ReactionType, number> = { heart: 0, support: 0, prayer: 0, celebration: 0, hug: 0 };
+      const users: Record<ReactionType, CommunityReaction[]> = { heart: [], support: [], prayer: [], celebration: [], hug: [] };
+      (rs || []).forEach(r => {
+        counts[r.reaction_type] = (counts[r.reaction_type] || 0) + 1;
+        users[r.reaction_type].push(r);
+      });
+      setReactions(counts);
+      setReactionsWithUsers(users);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
   }, [id]);
 
   React.useEffect(() => {
@@ -241,10 +256,27 @@ export default function CommunityDetailScreen() {
     if (!commentText.trim()) return;
     try {
       setSending(true);
-      await addCommunityComment(id!, { content: commentText.trim(), is_anonymous: anonymous });
+      console.log('Sending comment:', commentText.trim());
+
+      const newComment = await addCommunityComment(id!, {
+        content: commentText.trim(),
+        is_anonymous: anonymous
+      });
+
+      console.log('Comment created successfully:', newComment);
       setCommentText('');
+
+      // Force refresh all data
+      console.log('Refreshing data after comment...');
       await loadAll();
+
+      // Verify comments were loaded and state updated
+      setTimeout(() => {
+        console.log('Final comments state check:', comments.length);
+        console.log('Comments array:', comments);
+      }, 200);
     } catch (e: any) {
+      console.error('Comment creation error:', e);
       Alert.alert('', e?.message || L.failedSend);
     } finally {
       setSending(false);
@@ -333,32 +365,35 @@ export default function CommunityDetailScreen() {
                 </View>
               ) : (
                 <View style={styles.commentsList}>
-                  {comments.map((c) => (
-                    <View
-                      key={c.id}
-                      style={[
-                        styles.comment,
-                        {
-                          backgroundColor: colors.surface,
-                          borderColor: colors.border,
-                          shadowColor: colors.shadow
-                        }
-                      ]}
-                    >
-                      <View style={styles.commentHeader}>
-                        <Avatar name={c.user?.name} isAnonymous={c.is_anonymous} size={32} />
-                        <View style={styles.commentInfo}>
-                          <Text style={[styles.commentAuthor, { color: colors.text }]}>
-                            {c.is_anonymous ? L.anonymous : (c.user?.name || L.anonymousUser)}
-                          </Text>
-                          <Text style={[styles.commentTime, { color: colors.textSecondary }]}>
-                            {formatTimeAgo(c.created_at)}
-                          </Text>
+                  {comments.map((c, index) => {
+                    console.log(`Rendering comment ${index + 1}:`, c.id, c.content);
+                    return (
+                      <View
+                        key={c.id}
+                        style={[
+                          styles.comment,
+                          {
+                            backgroundColor: colors.surface,
+                            borderColor: colors.border,
+                            shadowColor: colors.shadow
+                          }
+                        ]}
+                      >
+                        <View style={styles.commentHeader}>
+                          <Avatar name={c.user?.name} isAnonymous={c.is_anonymous} size={32} />
+                          <View style={styles.commentInfo}>
+                            <Text style={[styles.commentAuthor, { color: colors.text }]}>
+                              {c.is_anonymous ? L.anonymous : (c.user?.name || L.anonymousUser)}
+                            </Text>
+                            <Text style={[styles.commentTime, { color: colors.textSecondary }]}>
+                              {formatTimeAgo(c.created_at)}
+                            </Text>
+                          </View>
                         </View>
+                        <Text style={[styles.commentText, { color: colors.text }]}>{c.content}</Text>
                       </View>
-                      <Text style={[styles.commentText, { color: colors.text }]}>{c.content}</Text>
-                    </View>
-                  ))}
+                    );
+                  })}
                 </View>
               )}
             </View>
