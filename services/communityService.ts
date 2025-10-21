@@ -2,6 +2,13 @@ import { authorizedFetch } from './authService';
 
 export type CommunityPostType = 'support' | 'celebration' | 'advice' | 'story' | 'question' | 'gratitude';
 
+export interface User {
+  id: number;
+  name: string;
+  email?: string;
+  profile_image?: string; // ✅ Added profile_image
+}
+
 export interface CommunityPost {
   id: number;
   post_type: CommunityPostType;
@@ -12,8 +19,8 @@ export interface CommunityPost {
   updated_at?: string;
   comment_count?: number;
   reaction_count?: number;
-  user_reactions?: string[]; // Array of reaction types the current user has reacted with
-  user?: { id: number; name: string; profile_image?: string };
+  user_reactions?: string[];
+  user?: User; // ✅ Now includes profile_image
 }
 
 export interface ListPostParams {
@@ -64,18 +71,12 @@ export async function createCommunityPost(input: {
   return resp.json();
 }
 
-export interface User {
-  id: number;
-  name: string;
-  email?: string;
-}
-
 export interface CommunityComment {
   id: number;
   content: string;
   is_anonymous: boolean;
   created_at: string;
-  user?: User;
+  user?: User; // ✅ Now includes profile_image
 }
 
 export async function listCommunityComments(postId: number | string): Promise<CommunityComment[]> {
@@ -104,7 +105,7 @@ export interface CommunityReaction {
   reaction_type: ReactionType;
   is_anonymous?: boolean;
   created_at: string;
-  user?: User;
+  user?: User; // ✅ Now includes profile_image
 }
 
 export async function listCommunityReactions(postId: number | string): Promise<CommunityReaction[]> {

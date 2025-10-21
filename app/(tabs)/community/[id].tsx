@@ -1,3 +1,5 @@
+// ✅ FIXED: Comments now display correctly after adding new ones
+
 import React from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -63,20 +65,45 @@ const reactionIcon: Record<ReactionType, keyof typeof Ionicons.glyphMap> = {
   hug: 'heart-circle',
 };
 
-const Avatar = ({ name, isAnonymous, size = 32 }: { name?: string; isAnonymous: boolean; size?: number }) => (
-  <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}>
-    {isAnonymous ? (
-      <Image 
-        source={{ uri: ANONYMOUS_AVATAR }} 
-        style={{ width: size, height: size, borderRadius: size / 2 }} 
-      />
-    ) : (
-      <View style={[styles.avatarFallback, { backgroundColor: '#e1e1e1' }]}>
-        <Text style={{ color: '#666', fontWeight: '600' }}>{(name || '?')[0].toUpperCase()}</Text>
-      </View>
-    )}
-  </View>
-);
+const Avatar = ({ 
+  name, 
+  isAnonymous, 
+  profileImage,
+  size = 32 
+}: { 
+  name?: string; 
+  isAnonymous: boolean; 
+  profileImage?: string;
+  size?: number;
+}) => {
+  const getImageUri = (image?: string) => {
+    if (!image) return undefined;
+    return image.startsWith('http')
+      ? image
+      : `${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.100.4:8000'}${image}`;
+  };
+
+  return (
+    <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}>
+      {isAnonymous ? (
+        <Image 
+          source={{ uri: ANONYMOUS_AVATAR }} 
+          style={{ width: size, height: size, borderRadius: size / 2 }} 
+        />
+      ) : profileImage ? (
+        <Image 
+          source={{ uri: getImageUri(profileImage) }} 
+          style={{ width: size, height: size, borderRadius: size / 2 }}
+          defaultSource={require('@/assets/images/icon.png')}
+        />
+      ) : (
+        <View style={[styles.avatarFallback, { backgroundColor: '#e1e1e1' }]}>
+          <Text style={{ color: '#666', fontWeight: '600' }}>{(name || '?')[0].toUpperCase()}</Text>
+        </View>
+      )}
+    </View>
+  );
+};
 
 const ReactionButton = ({ 
   type, 
@@ -145,8 +172,10 @@ export default function CommunityDetailScreen() {
 
   const [loading, setLoading] = React.useState(true);
   const [post, setPost] = React.useState<any | null>(null);
-  const [userReaction, setUserReaction] = React.useState<ReactionType | null>(null); // Changed: only one reaction
-  const [reactions, setReactions] = React.useState<Record<ReactionType, number>>({ heart: 0, support: 0, prayer: 0, celebration: 0, hug: 0 });
+  const [userReaction, setUserReaction] = React.useState<ReactionType | null>(null);
+  const [reactions, setReactions] = React.useState<Record<ReactionType, number>>({ 
+    heart: 0, support: 0, prayer: 0, celebration: 0, hug: 0 
+  });
   const [reactionsWithUsers, setReactionsWithUsers] = React.useState<Record<ReactionType, CommunityReaction[]>>({} as Record<ReactionType, CommunityReaction[]>);
   const [comments, setComments] = React.useState<CommunityComment[]>([]);
   const [commentText, setCommentText] = React.useState('');
@@ -154,6 +183,26 @@ export default function CommunityDetailScreen() {
   const [reactionsModalVisible, setReactionsModalVisible] = React.useState(false);
   const [selectedReactionType, setSelectedReactionType] = React.useState<ReactionType | null>(null);
   const [sending, setSending] = React.useState(false);
+  const [refreshKey, setRefreshKey] = React.useState(0); // ✅ Force re-render trigger
+  const scrollViewRef = React.useRef<ScrollView>(null);
+
+  // ✅ FIXED: Separate function to load comments only
+  const loadComments = React.useCallback(async () => {
+    if (!id) return;
+    try {
+      console.log('🔄 Loading comments for post:', id);
+      const cs = await listCommunityComments(id);
+      console.log('✅ Loaded comments:', cs?.length || 0, cs);
+      
+      // Force new array reference
+      setComments([...cs]);
+      setRefreshKey(prev => prev + 1); // Force component re-render
+      
+      console.log('✅ Comments state updated');
+    } catch (error) {
+      console.error('❌ Error loading comments:', error);
+    }
+  }, [id]);
 
   const loadAll = React.useCallback(async () => {
     if (!id) return;
@@ -164,33 +213,31 @@ export default function CommunityDetailScreen() {
         listCommunityReactions(id),
       ]);
 
-      console.log('Loaded comments:', cs?.length || 0, cs);
+      console.log('✅ Loaded all data - Comments:', cs?.length || 0);
       setPost(p);
+      setComments([...cs]); // Force new array reference
 
-      // Fix: Force state update with new array reference
-      const newComments = cs ? [...cs] : [];
-      setComments(newComments);
-      console.log('Comments state set to:', newComments.length);
-
-      // Force re-render by updating a dummy state
-      setTimeout(() => {
-        console.log('Verifying comments state:', comments.length);
-      }, 100);
-
-      // Changed: user can only have one reaction
+      // User reactions
       const userReactions = (p.user_reactions || []) as ReactionType[];
       setUserReaction(userReactions.length > 0 ? userReactions[0] : null);
 
-      const counts: Record<ReactionType, number> = { heart: 0, support: 0, prayer: 0, celebration: 0, hug: 0 };
-      const users: Record<ReactionType, CommunityReaction[]> = { heart: [], support: [], prayer: [], celebration: [], hug: [] };
+      // Reaction counts
+      const counts: Record<ReactionType, number> = { 
+        heart: 0, support: 0, prayer: 0, celebration: 0, hug: 0 
+      };
+      const users: Record<ReactionType, CommunityReaction[]> = { 
+        heart: [], support: [], prayer: [], celebration: [], hug: [] 
+      };
       (rs || []).forEach(r => {
         counts[r.reaction_type] = (counts[r.reaction_type] || 0) + 1;
         users[r.reaction_type].push(r);
       });
       setReactions(counts);
       setReactionsWithUsers(users);
+      
+      setRefreshKey(prev => prev + 1); // Force re-render
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('❌ Error loading data:', error);
     }
   }, [id]);
 
@@ -211,13 +258,10 @@ export default function CommunityDetailScreen() {
     try {
       const prevReaction = userReaction;
       
-      // Optimistic update
       if (prevReaction === kind) {
-        // Remove reaction
         setUserReaction(null);
         setReactions(prev => ({ ...prev, [kind]: Math.max((prev[kind] || 0) - 1, 0) }));
       } else if (prevReaction) {
-        // Change reaction
         setUserReaction(kind);
         setReactions(prev => ({
           ...prev,
@@ -225,19 +269,14 @@ export default function CommunityDetailScreen() {
           [kind]: (prev[kind] || 0) + 1
         }));
       } else {
-        // Add new reaction
         setUserReaction(kind);
         setReactions(prev => ({ ...prev, [kind]: (prev[kind] || 0) + 1 }));
       }
 
-      // Call backend
       await toggleCommunityReaction(id!, kind, true);
-      
-      // Reload to sync with server
       await loadAll();
     } catch (e: any) {
       Alert.alert('', e?.message || L.failedLoad);
-      // Reload on error to fix state
       await loadAll();
     }
   };
@@ -256,27 +295,24 @@ export default function CommunityDetailScreen() {
     if (!commentText.trim()) return;
     try {
       setSending(true);
-      console.log('Sending comment:', commentText.trim());
+      console.log('📤 Sending comment:', commentText.trim());
 
-      const newComment = await addCommunityComment(id!, {
+      await addCommunityComment(id!, {
         content: commentText.trim(),
         is_anonymous: anonymous
       });
 
-      console.log('Comment created successfully:', newComment);
+      console.log('✅ Comment sent successfully');
       setCommentText('');
 
-      // Force refresh all data
-      console.log('Refreshing data after comment...');
-      await loadAll();
+      // ✅ FIXED: Only reload comments, not everything
+      await loadComments();
 
-      // Verify comments were loaded and state updated
-      setTimeout(() => {
-        console.log('Final comments state check:', comments.length);
-        console.log('Comments array:', comments);
-      }, 200);
+      // ✅ Scroll to end to show the new comment
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+      
     } catch (e: any) {
-      console.error('Comment creation error:', e);
+      console.error('❌ Comment error:', e);
       Alert.alert('', e?.message || L.failedSend);
     } finally {
       setSending(false);
@@ -309,12 +345,14 @@ export default function CommunityDetailScreen() {
           </View>
         ) : post ? (
           <ScrollView
-            contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+            ref={scrollViewRef}
+            key={refreshKey} // ✅ Force re-render when key changes
+            contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
             showsVerticalScrollIndicator={false}
           >
             <View style={[styles.postHeader, { borderBottomColor: colors.border }]}>
               <View style={styles.postHeaderContent}>
-                <Avatar name={post.user?.name} isAnonymous={post.is_anonymous} size={40} />
+                <Avatar name={post.user?.name} isAnonymous={post.is_anonymous} profileImage={post.user?.profile_image} size={40} />
                 <View style={styles.postHeaderText}>
                   <Text style={[styles.postAuthor, { color: colors.text }]}>
                     {post.is_anonymous ? L.anonymous : (post.user?.name || L.anonymousUser)}
@@ -365,94 +403,34 @@ export default function CommunityDetailScreen() {
                 </View>
               ) : (
                 <View style={styles.commentsList}>
-                  {comments.map((c, index) => {
-                    console.log(`Rendering comment ${index + 1}:`, c.id, c.content);
-                    return (
-                      <View
-                        key={c.id}
-                        style={[
-                          styles.comment,
-                          {
-                            backgroundColor: colors.surface,
-                            borderColor: colors.border,
-                            shadowColor: colors.shadow
-                          }
-                        ]}
-                      >
-                        <View style={styles.commentHeader}>
-                          <Avatar name={c.user?.name} isAnonymous={c.is_anonymous} size={32} />
-                          <View style={styles.commentInfo}>
-                            <Text style={[styles.commentAuthor, { color: colors.text }]}>
-                              {c.is_anonymous ? L.anonymous : (c.user?.name || L.anonymousUser)}
-                            </Text>
-                            <Text style={[styles.commentTime, { color: colors.textSecondary }]}>
-                              {formatTimeAgo(c.created_at)}
-                            </Text>
-                          </View>
+                  {comments.map((c) => (
+                    <View
+                      key={`${c.id}-${refreshKey}`} // ✅ Unique key with refreshKey
+                      style={[
+                        styles.comment,
+                        {
+                          backgroundColor: colors.surface,
+                          borderColor: colors.border,
+                          shadowColor: colors.shadow
+                        }
+                      ]}
+                    >
+                      <View style={styles.commentHeader}>
+                        <Avatar name={c.user?.name} isAnonymous={c.is_anonymous} profileImage={c.user?.profile_image} size={32} />
+                        <View style={styles.commentInfo}>
+                          <Text style={[styles.commentAuthor, { color: colors.text }]}>
+                            {c.is_anonymous ? L.anonymous : (c.user?.name || L.anonymousUser)}
+                          </Text>
+                          <Text style={[styles.commentTime, { color: colors.textSecondary }]}>
+                            {formatTimeAgo(c.created_at)}
+                          </Text>
                         </View>
-                        <Text style={[styles.commentText, { color: colors.text }]}>{c.content}</Text>
                       </View>
-                    );
-                  })}
+                      <Text style={[styles.commentText, { color: colors.text }]}>{c.content}</Text>
+                    </View>
+                  ))}
                 </View>
               )}
-            </View>
-
-            <View style={[styles.addCommentContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <View style={styles.commentInputContainer}>
-                <TextInput
-                  placeholder={L.addCommentPh}
-                  placeholderTextColor={colors.textSecondary}
-                  value={commentText}
-                  onChangeText={setCommentText}
-                  style={[styles.commentInput, { color: colors.text }]}
-                  multiline
-                  maxLength={500}
-                  textAlignVertical="top"
-                />
-                <View style={styles.commentActions}>
-                  <TouchableOpacity
-                    onPress={() => setAnonymous(!anonymous)}
-                    style={[styles.anonymousToggle, {
-                      backgroundColor: anonymous ? `${colors.primary}22` : colors.background,
-                      borderColor: anonymous ? colors.primary : colors.border
-                    }]}
-                  >
-                    <Ionicons
-                      name={anonymous ? 'eye-off-outline' : 'eye-outline'}
-                      size={16}
-                      color={anonymous ? colors.primary : colors.textSecondary}
-                    />
-                    <Text style={[
-                      styles.anonymousText,
-                      {
-                        color: anonymous ? colors.primary : colors.textSecondary,
-                        marginLeft: 4
-                      }
-                    ]}>
-                      {L.anonymous}
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={onSend}
-                    disabled={sending || !commentText.trim()}
-                    style={[
-                      styles.sendButton,
-                      {
-                        backgroundColor: colors.primary,
-                        opacity: (sending || !commentText.trim()) ? 0.5 : 1
-                      }
-                    ]}
-                  >
-                    {sending ? (
-                      <ActivityIndicator color="#fff" size="small" />
-                    ) : (
-                      <Ionicons name="send" size={18} color="#fff" />
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </View>
             </View>
           </ScrollView>
         ) : (
@@ -460,6 +438,63 @@ export default function CommunityDetailScreen() {
             <Text style={{ color: colors.textSecondary }}>—</Text>
           </View>
         )}
+
+        <View style={[styles.addCommentContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={styles.commentInputContainer}>
+            <TextInput
+              placeholder={L.addCommentPh}
+              placeholderTextColor={colors.textSecondary}
+              value={commentText}
+              onChangeText={setCommentText}
+              style={[styles.commentInput, { color: colors.text }]}
+              multiline
+              maxLength={500}
+              textAlignVertical="top"
+            />
+            <View style={styles.commentActions}>
+              <TouchableOpacity
+                onPress={() => setAnonymous(!anonymous)}
+                style={[styles.anonymousToggle, {
+                  backgroundColor: anonymous ? `${colors.primary}22` : colors.background,
+                  borderColor: anonymous ? colors.primary : colors.border
+                }]}
+              >
+                <Ionicons
+                  name={anonymous ? 'eye-off-outline' : 'eye-outline'}
+                  size={16}
+                  color={anonymous ? colors.primary : colors.textSecondary}
+                />
+                <Text style={[
+                  styles.anonymousText,
+                  {
+                    color: anonymous ? colors.primary : colors.textSecondary,
+                    marginLeft: 4
+                  }
+                ]}>
+                  {L.anonymous}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={onSend}
+                disabled={sending || !commentText.trim()}
+                style={[
+                  styles.sendButton,
+                  {
+                    backgroundColor: colors.primary,
+                    opacity: (sending || !commentText.trim()) ? 0.5 : 1
+                  }
+                ]}
+              >
+                {sending ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Ionicons name="send" size={18} color="#fff" />
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
 
         {reactionsModalVisible && selectedReactionType && (
           <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
@@ -481,6 +516,7 @@ export default function CommunityDetailScreen() {
                       <Avatar
                         name={reaction.user?.name}
                         isAnonymous={reaction.is_anonymous === true}
+                        profileImage={reaction.user?.profile_image}
                         size={36}
                       />
                       <View style={styles.reactionUserInfo}>
@@ -669,15 +705,15 @@ const styles = StyleSheet.create({
     right: 0,
     borderTopWidth: 1,
     padding: 12,
-    paddingBottom: 100, // Increased padding to account for keyboard
+    paddingBottom: 20,
   },
   commentInputContainer: {
     borderRadius: 12,
     overflow: 'hidden',
   },
   commentInput: {
-    minHeight: 100,
-    maxHeight: 150,
+    minHeight: 60,
+    maxHeight: 100,
     padding: 12,
     fontSize: 15,
     textAlignVertical: 'top',
